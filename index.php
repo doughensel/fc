@@ -7,9 +7,19 @@
 </head>
 <body>
 
-<?php include_once "config.php"; ?>
+<?php 
 
-<?php mysqli_close(); ?>
+include_once "config.php"; 
+
+$con=mysqli_connect($database, $username, $password, $db_table);
+
+if (mysqli_connect_errno()){ echo "Failed to connect to MySQL: " . mysqli_connect_error(); }
+
+
+
+mysqli_close($con); 
+
+?>
 
 </body>
 </html>
