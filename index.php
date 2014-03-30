@@ -10,6 +10,9 @@
 		display: inline-block;
 		width: 200px; 
 	}
+	.gameDay ul li{ opacity: 0.5; }
+		.gameDay ul li:hover{ opacity: 1; }
+
 	.playerStatus a{ text-decoration: none; }
 		.playerStatus a:hover,
 		.playerStatus a:focus,
@@ -113,6 +116,15 @@ foreach( $schedule as $sch ){
 
 	if( time() > $sch['DayOf'] ){
 		$gameID = $sch['ID'];
+
+		$playerYes = [];
+		$playerNo  = [];
+		$playerMay = [];
+
+		if( !is_null($sch['PlayerYes'])){ $playerYes = unserialize($sch['PlayerYes']); }
+		if( !is_null($sch['PlayerNo' ])){ $playerNo  = unserialize($sch['PlayerNo' ]); }
+		if( !is_null($sch['PlayerMay'])){ $playerMay = unserialize($sch['PlayerMay']); }
+
 		echo '<div class="gameDay">';
 			echo '<h2>';
 
@@ -145,12 +157,18 @@ foreach( $schedule as $sch ){
 			echo '<li>';
 				echo '<span class="playerName">';
 					echo $player['Name'];
+					echo '<input type="hidden" class="playerID" value="' . $player['ID'] . '" />';
 				echo '</span>'; // END span.playerName
 				$playerID = $player['ID'];
+
+				$activeYes = ( checkPlayerStatus( $playerYes, $playerID ) )? ' class="active" ' : '';
+				$activeNo  = ( checkPlayerStatus( $playerNo,  $playerID ) )? ' class="active" ' : '';
+				$activeMay = ( $activeYes == '' && $activeNo == ''        )? ' class="active" ' : '';
+
 				echo '<span class="playerStatus">';
-					echo '<a href="javascript:updateStatus(' . $playerID . ', ' . $gameID . ', 0);">Yes</a> ';
-					echo '<a href="javascript:updateStatus(' . $playerID . ', ' . $gameID . ', 1);">No</a> ';
-					echo '<a href="javascript:updateStatus(' . $playerID . ', ' . $gameID . ', 2);">Maybe</a>';
+					echo '<a href="javascript:updateStatus(' . $playerID . ', ' . $gameID . ', 0);" ' . $activeYes . '>Yes</a> ';
+					echo '<a href="javascript:updateStatus(' . $playerID . ', ' . $gameID . ', 1);" ' . $activeNo  . '>No</a> ';
+					echo '<a href="javascript:updateStatus(' . $playerID . ', ' . $gameID . ', 2);" ' . $activeMay . '>Maybe</a>';
 				echo '</span>'; // END span.playerStatus
 			echo '</li>';
 		}
@@ -159,8 +177,20 @@ foreach( $schedule as $sch ){
 			echo '</p>'; // END p.roster
 
 		echo '</div>'; // END .gameDay
+
+		
+
+
 	}// END if( time() > strtotime( $sch['DayOf'] ) )
 
+}
+
+function checkPlayerStatus( $arr, $player ){
+	$playerStatus = false;
+	for( $x=0; $x<count($arr); $x++ ){
+		if( $arr[$x] == $player ){ $playerStatus = true; }
+	}
+	return $playerStatus;
 }
 
 
@@ -171,8 +201,33 @@ mysqli_close($con);
 <script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
 <script type="text/javascript">
 	
-function updateStatus( playerID, gameID, status ){
-	alert( 'test' );
+$('.playerStatus a').click(function(){
+	$(this).removeClass('active');
+	$(this).siblings().removeClass('active');
+	$(this).addClass('active');
+});
+
+function updateStatus( player, game, state ){
+	var playerIDs = [];
+	$('.gameDay:eq(0) span.playerName .playerID').each( function(){
+		playerIDs.push( $(this).val() );
+	});
+
+	$.ajax({
+		url: 'update.php',
+		type: "POST",
+		data: {
+			playerID: player,
+			gameID  : game,
+			status  : state,
+			allIDs  : playerIDs
+		}
+	});
+/**
+	.done(function( data ){
+		console.log( data );
+	});
+**/
 }
 
 </script>
