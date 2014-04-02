@@ -8,27 +8,32 @@ $allIDs   = $_POST['allIDs'];
 include_once "config.php"; 
 
 // CONNECT TO THE DATABASE
-$con=mysqli_connect($database, $username, $password, $db_table);
-if (mysqli_connect_errno()){ echo "Failed to connect to MySQL: " . mysqli_connect_error(); }
+$mysqli = new mysqli($host, $username, $password, $database);
+/* check connection */
+if ($mysqli->connect_errno) {
+    printf("Connect failed: %s\n", $mysqli->connect_error);
+    exit();
+}
+$schedule = $mysqli->query("SELECT * FROM schedule WHERE ID=$gameID LIMIT 1");
 
-$schedule = mysqli_query($con,"SELECT * FROM Schedule WHERE ID=$gameID LIMIT 1");
-
-$yesArray = [];
-$noArray  = [];
-$mayArray = [];
+$yesArray = array();
+$noArray  = array();
+$mayArray = array();
 
 $yesString = '';
 $noString  = '';
 $mayString = '';
 
-foreach( $schedule as $sch ){
-	if( !is_null( $sch['PlayerYes'] ) ){ $yesArray = unserialize( $sch['PlayerYes'] ); }
-	if( !is_null( $sch['PlayerNo' ] ) ){ $noArray  = unserialize( $sch['PlayerNo' ] ); }
-	if( !is_null( $sch['PlayerMay'] ) ){ 
-		$mayArray = unserialize( $sch['PlayerMay'] ); 
+while( $sch = $schedule->fetch_object() ){
+// foreach( $schedule as $sch ){
+	if( !is_null( $sch->PlayerYes ) ){ $yesArray = unserialize( $sch->PlayerYes ); }
+	if( !is_null( $sch->PlayerNo  ) ){ $noArray  = unserialize( $sch->PlayerNo  ); }
+	if( !is_null( $sch->PlayerMay ) ){ 
+		$mayArray = unserialize( $sch->PlayerMay ); 
 	}else{
 		$mayArray = $allIDs;
 	}
+	
 
 	// status => 0 is Yes | 1 is No | 2/Default is Maybe
 	$state = ( $status == 0 )? 'add' : 'remove';
@@ -62,8 +67,8 @@ function updateArray( $arr, $player, $state ){
 	return $arr;
 }
 
-mysqli_query($con,"UPDATE Schedule SET PlayerYes='$yesString', PlayerNo='$noString', PlayerMay='$mayString' WHERE ID=$gameID");
+$mysqli->query("UPDATE schedule SET PlayerYes='$yesString', PlayerNo='$noString', PlayerMay='$mayString' WHERE ID=$gameID");
 
-mysqli_close($con); 
+$mysqli->close(); 
 
 ?>
