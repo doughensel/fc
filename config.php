@@ -2,7 +2,7 @@
 
 
 $username = "root";
-$password = "";
+$password = "empty";
 $database = "localhost";
 $db_table = "fc";
 
